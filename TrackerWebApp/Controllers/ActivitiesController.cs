@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Runtime.Serialization.Json;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,6 +17,7 @@ namespace TrackerWebApp.Controllers
     public class ActivitiesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        static HttpClient client = new HttpClient();
 
         public ActivitiesController(ApplicationDbContext context)
         {
@@ -29,18 +34,68 @@ namespace TrackerWebApp.Controllers
         // GET: Activities/Details/5
         public async Task<IActionResult> Details(int? id)
         {
+            var activities = _context.Activity;
+            Activity activity;
+
             if (id == null)
             {
-                return NotFound();
+                activity = await activities
+                    .Include(a => a.ActivityType)
+                    .Include(a => a.Notes)
+                    .OrderByDescending(m => m.Id)
+                    .FirstAsync();
             }
 
-            var activity = await _context.Activity
-                .Include(a => a.ActivityType)
-                .SingleOrDefaultAsync(m => m.Id == id);
-            if (activity == null)
+            else
             {
-                return NotFound();
+                activity = await activities
+                    .Include(a => a.ActivityType)
+                    .Include(a => a.Notes)
+                    .SingleOrDefaultAsync(m => m.Id == id);
+
+                if (activity == null)
+                {
+                    return NotFound();
+                }
             }
+
+            var PreviousActivity = activities.ToList().Select(x => x.Id).TakeWhile(x => x != activity.Id).LastOrDefault();
+            var NextActivity = activities.ToList().Select(x => x.Id).SkipWhile(x => x != activity.Id).Skip(1).FirstOrDefault();
+
+
+            HttpResponseMessage response = await client.GetAsync($"https://trackmyrun-41804.firebaseio.com/{activity.FirebaseLocation}.json");
+
+            GeoLocation[] geoLocationArray;
+
+                byte[] responseByteArray = await response.Content.ReadAsByteArrayAsync();
+                DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(GeoLocation[]));
+                MemoryStream stream = new MemoryStream(responseByteArray);
+                stream.Position = 0;
+                geoLocationArray = (GeoLocation[])ser.ReadObject(stream);
+
+
+            StringBuilder polyLine = new StringBuilder();
+
+            polyLine.Append("http://maps.googleapis.com/maps/api/staticmap?size=800x400&path=");
+
+            foreach (GeoLocation g in geoLocationArray)
+            {
+                int arrayIndex = geoLocationArray.ToList().IndexOf(g);
+
+                if (arrayIndex % 5 == 0)
+                {
+                    polyLine.Append($"{g.coords.latitude.ToString()},{g.coords.longitude.ToString()}");
+                    if(arrayIndex < geoLocationArray.Length - 5)
+                    {
+                        polyLine.Append("|");
+                    }
+                }
+            }
+
+            ViewData["Map"] = polyLine.ToString();
+            ViewData["PreviousActivityId"] = (int?) PreviousActivity;
+            ViewData["NextActivityId"] = (int?)NextActivity;
+            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityType, "ActivityTypeId", "Description", activity.ActivityTypeId);
 
             return View(activity);
         }
@@ -82,7 +137,8 @@ namespace TrackerWebApp.Controllers
             {
                 return NotFound();
             }
-            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityType, "ActivityTypeId", "ActivityTypeId", activity.ActivityTypeId);
+            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityType, "ActivityTypeId", "Description", activity.ActivityTypeId);
+
             return View(activity);
         }
 
@@ -118,8 +174,7 @@ namespace TrackerWebApp.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ActivityTypeId"] = new SelectList(_context.ActivityType, "ActivityTypeId", "ActivityTypeId", activity.ActivityTypeId);
-            return View(activity);
+            return RedirectToAction("Details", new { Id = id });
         }
 
         // GET: Activities/Delete/5

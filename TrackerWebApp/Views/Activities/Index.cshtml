@@ -12,18 +12,15 @@
 <table class="table">
     <thead>
         <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Distance)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Pace)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.StartTime)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.FirebaseLocation)
-                </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StartTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Distance)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Pace)
+            </th>
             <th>
                 @Html.DisplayNameFor(model => model.ActivityType)
             </th>
@@ -31,8 +28,11 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
+@foreach (var item in Model.Reverse()) {
+        <tr bgcolor=@(item.ActivityTypeId.HasValue ? "" : "#FF0000")>
+            <td>
+                @Html.DisplayFor(modelItem => item.StartTime)
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Distance)
             </td>
@@ -40,13 +40,7 @@
                 @Html.DisplayFor(modelItem => item.Pace)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.StartTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FirebaseLocation)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ActivityType.ActivityTypeId)
+                @Html.DisplayFor(modelItem => item.ActivityType.Description)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

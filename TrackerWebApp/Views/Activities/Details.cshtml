@@ -4,10 +4,23 @@
     ViewData["Title"] = "Details";
 }
 
-<h2>Details</h2>
+<h2>
+    @if (ViewBag.PreviousActivityId > 0)
+    {
+        @Html.ActionLink("<", "Details", "Activities", new { id = ViewBag.PreviousActivityId }, null)
+        <span> | </span>
+    }
 
+    @Html.DisplayFor(model => model.StartTime) :
+    @(Model.ActivityTypeId.HasValue ? Model.ActivityType.Description : "Untagged")
+    @if (ViewBag.NextActivityId > 0)
+    {
+        <span> | </span>
+        @Html.ActionLink(">", "Details", "Activities", new { id = ViewBag.NextActivityId }, null)
+    }
+</h2>
+<img src="@ViewBag.Map">
 <div>
-    <h4>Activity</h4>
     <hr />
     <dl class="dl-horizontal">
         <dt>
@@ -22,25 +35,44 @@
         <dd>
             @Html.DisplayFor(model => model.Pace)
         </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.StartTime)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.StartTime)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.FirebaseLocation)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.FirebaseLocation)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.ActivityType)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.ActivityType.ActivityTypeId)
-        </dd>
     </dl>
+    @if (!Model.ActivityTypeId.HasValue)
+    {
+    <form asp-action="Edit">
+        <div class="form-group">
+            <label asp-for="ActivityTypeId" class="control-label"></label>
+            <select asp-for="ActivityTypeId" class="form-control" asp-items="ViewBag.ActivityTypeId"></select>
+            <span asp-validation-for="ActivityTypeId" class="text-danger"></span>
+        </div>
+        <input type="hidden" name="Distance" value=@Model.Distance />
+        <input type="hidden" name="Pace" value=@Model.Pace />
+        <input type="hidden" name="StartTime" value=@Model.StartTime />
+        <input type="hidden" name="FirebaseLocation" value=@Model.FirebaseLocation />
+        <div class="form-group">
+            <input type="submit" value="Save" class="btn btn-default" />
+        </div>
+    </form>
+    }
+    @foreach (var note in Model.Notes)
+    {
+        <p>
+            @(note.Content)
+        </p>
+        @Html.ActionLink("Edit", "Edit", "Notes", new { id = note.NoteId }, null)
+        <span> | </span>
+        @Html.ActionLink("Delete", "Delete", "Notes", new { id = note.NoteId }, null)
+
+
+    }
+    @using (Html.BeginForm("Create", "Notes"))
+    {
+        @Html.TextArea("Content", "Add a note about the activity", new { @class = "form-control" })
+        <div class="form-group">
+            <input type="submit" value="Create" class="btn btn-default" />
+        </div>
+        <input type="hidden" name="ActivityId" value=@Model.Id />
+
+    }
 </div>
 <div>
     <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
