@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using TrackerWebApp.Data;
 using TrackerWebApp.Models;
 
@@ -18,10 +19,12 @@ namespace TrackerWebApp.Controllers
     {
         private readonly ApplicationDbContext _context;
         static HttpClient client = new HttpClient();
+        public IConfiguration Configuration { get; }
 
-        public ActivitiesController(ApplicationDbContext context)
+        public ActivitiesController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            Configuration = configuration;
         }
 
         // GET: Activities
@@ -42,7 +45,7 @@ namespace TrackerWebApp.Controllers
                 activity = await activities
                     .Include(a => a.ActivityType)
                     .Include(a => a.Notes)
-                    .OrderByDescending(m => m.Id)
+                    .OrderByDescending(m => m.StartTime)
                     .FirstAsync();
             }
 
@@ -63,7 +66,7 @@ namespace TrackerWebApp.Controllers
             var NextActivity = activities.ToList().Select(x => x.Id).SkipWhile(x => x != activity.Id).Skip(1).FirstOrDefault();
 
 
-            HttpResponseMessage response = await client.GetAsync($"https://trackmyrun-41804.firebaseio.com/{activity.FirebaseLocation}.json");
+            HttpResponseMessage response = await client.GetAsync($"{Configuration["FirebaseURL"]}/{activity.FirebaseLocation}.json");
 
             GeoLocation[] geoLocationArray;
 
@@ -76,7 +79,7 @@ namespace TrackerWebApp.Controllers
 
             StringBuilder polyLine = new StringBuilder();
 
-            polyLine.Append("http://maps.googleapis.com/maps/api/staticmap?size=800x400&path=");
+            polyLine.Append($"http://maps.googleapis.com/maps/api/staticmap?key={Configuration["GoogleMapsAPIKey"]}&maptype=terrain&size=1200x400&path=");
 
             foreach (GeoLocation g in geoLocationArray)
             {
@@ -84,7 +87,7 @@ namespace TrackerWebApp.Controllers
 
                 if (arrayIndex % 5 == 0)
                 {
-                    polyLine.Append($"{g.coords.latitude.ToString()},{g.coords.longitude.ToString()}");
+                    polyLine.Append($"{g.coords.latitude.ToString("F4")},{g.coords.longitude.ToString("F4")}");
                     if(arrayIndex < geoLocationArray.Length - 5)
                     {
                         polyLine.Append("|");

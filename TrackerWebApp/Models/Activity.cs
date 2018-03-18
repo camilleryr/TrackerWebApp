@@ -18,6 +18,7 @@ namespace TrackerWebApp.Models
         public double Pace { get; set; }
 
         [Required]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:MMM d yy}")]
         public DateTime StartTime { get; set; }
 
         [Required]

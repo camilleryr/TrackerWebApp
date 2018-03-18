@@ -3,23 +3,45 @@
 @{
     ViewData["Title"] = "Details";
 }
-
-<h2>
-    @if (ViewBag.PreviousActivityId > 0)
+<div style="text-align:center">
+    <h2 style="display:inline">
+        @Html.DisplayFor(model => model.StartTime) :
+    </h2>
+    @if (Model.ActivityTypeId.HasValue)
     {
+        <h2 style="display:inline">
+            @(Model.ActivityType.Description)
+        </h2>
+    }
+    @if (!Model.ActivityTypeId.HasValue)
+    {
+        <form asp-action="Edit" style="display:inline">
+            <span class="form-group" style="display:inline">
+                <select asp-for="ActivityTypeId" class="form-control" style="display:inline;width:25%" asp-items="ViewBag.ActivityTypeId"></select>
+                <span asp-validation-for="ActivityTypeId" class="text-danger"></span>
+            </span>
+            <input type="hidden" name="Distance" value=@Model.Distance />
+            <input type="hidden" name="Pace" value=@Model.Pace />
+            <input type="hidden" name="StartTime" value=@Model.StartTime />
+            <input type="hidden" name="FirebaseLocation" value=@Model.FirebaseLocation />
+            <div class="form-group" style="display:inline">
+                <input type="submit" value="Save" class="btn btn-default" />
+            </div>
+        </form>
+    }
+</div>
+
+<br />
+<div style="display:flex;justify-content:space-around">
+    <button runat="server" id="uxSearch" class="btn btn-default" style="visibility:@(ViewBag.PreviousActivityId > 0 ? "" : "hidden")">
         @Html.ActionLink("<", "Details", "Activities", new { id = ViewBag.PreviousActivityId }, null)
-        <span> | </span>
-    }
-
-    @Html.DisplayFor(model => model.StartTime) :
-    @(Model.ActivityTypeId.HasValue ? Model.ActivityType.Description : "Untagged")
-    @if (ViewBag.NextActivityId > 0)
-    {
-        <span> | </span>
+    </button>
+    <img src="@ViewBag.Map">
+    <button runat="server" id="uxSearch" class="btn btn-default" style="visibility:@(ViewBag.NextActivityId > 0 ? "" : "hidden")">
         @Html.ActionLink(">", "Details", "Activities", new { id = ViewBag.NextActivityId }, null)
-    }
-</h2>
-<img src="@ViewBag.Map">
+    </button>
+
+</div>
 <div>
     <hr />
     <dl class="dl-horizontal">
@@ -36,23 +58,7 @@
             @Html.DisplayFor(model => model.Pace)
         </dd>
     </dl>
-    @if (!Model.ActivityTypeId.HasValue)
-    {
-    <form asp-action="Edit">
-        <div class="form-group">
-            <label asp-for="ActivityTypeId" class="control-label"></label>
-            <select asp-for="ActivityTypeId" class="form-control" asp-items="ViewBag.ActivityTypeId"></select>
-            <span asp-validation-for="ActivityTypeId" class="text-danger"></span>
-        </div>
-        <input type="hidden" name="Distance" value=@Model.Distance />
-        <input type="hidden" name="Pace" value=@Model.Pace />
-        <input type="hidden" name="StartTime" value=@Model.StartTime />
-        <input type="hidden" name="FirebaseLocation" value=@Model.FirebaseLocation />
-        <div class="form-group">
-            <input type="submit" value="Save" class="btn btn-default" />
-        </div>
-    </form>
-    }
+
     @foreach (var note in Model.Notes)
     {
         <p>
