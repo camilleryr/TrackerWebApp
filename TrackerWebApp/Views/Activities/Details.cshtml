@@ -20,6 +20,7 @@
                 <select asp-for="ActivityTypeId" class="form-control" style="display:inline;width:25%" asp-items="ViewBag.ActivityTypeId"></select>
                 <span asp-validation-for="ActivityTypeId" class="text-danger"></span>
             </span>
+            <input type="hidden" name="Id" value=@Model.Id />
             <input type="hidden" name="Distance" value=@Model.Distance />
             <input type="hidden" name="Pace" value=@Model.Pace />
             <input type="hidden" name="StartTime" value=@Model.StartTime />

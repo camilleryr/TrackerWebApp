@@ -79,7 +79,7 @@ namespace TrackerWebApp.Controllers
 
             StringBuilder polyLine = new StringBuilder();
 
-            polyLine.Append($"http://maps.googleapis.com/maps/api/staticmap?key={Configuration["GoogleMapsAPIKey"]}&maptype=terrain&size=1200x400&path=");
+            polyLine.Append($"http://maps.googleapis.com/maps/api/staticmap?key={Configuration["GoogleMapsAPIKey"]}&maptype=terrain&size=500x250&scale=2&path=");
 
             foreach (GeoLocation g in geoLocationArray)
             {
